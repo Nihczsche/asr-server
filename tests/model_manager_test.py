@@ -5,7 +5,7 @@ import anyio
 from httpx import ASGITransport, AsyncClient
 import pytest
 
-from faster_whisper_server.main import create_app
+from asr_server.main import create_app
 
 
 @pytest.mark.asyncio

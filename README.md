@@ -1,9 +1,9 @@
 # Faster Whisper Server
-`faster-whisper-server` is an OpenAI API-compatible transcription server which uses [faster-whisper](https://github.com/SYSTRAN/faster-whisper) as its backend.
+`asr-server` is an OpenAI API-compatible transcription server which uses [faster-whisper](https://github.com/SYSTRAN/faster-whisper) as its backend.
 Features:
 - GPU and CPU support.
 - Easily deployable using Docker.
-- **Configurable through environment variables (see [config.py](./src/faster_whisper_server/config.py))**.
+- **Configurable through environment variables (see [config.py](./src/asr_server/config.py))**.
 - OpenAI API compatible.
 - Streaming support (transcription is sent via [SSE](https://en.wikipedia.org/wiki/Server-sent_events) as the audio is transcribed. You don't need to wait for the audio to fully be transcribed before receiving it).
 - Live transcription support (audio is sent via websocket as it's generated).
@@ -14,7 +14,7 @@ Please create an issue if you find a bug, have a question, or a feature suggesti
 ## OpenAI API Compatibility ++
 See [OpenAI API reference](https://platform.openai.com/docs/api-reference/audio) for more information.
 - Audio file transcription via `POST /v1/audio/transcriptions` endpoint.
-    - Unlike OpenAI's API, `faster-whisper-server` also supports streaming transcriptions(and translations). This is useful for when you want to process large audio files and would rather receive the transcription in chunks as they are processed rather than waiting for the whole file to be transcribed. It works similarly to chat messages when chatting with LLMs.
+    - Unlike OpenAI's API, `asr-server` also supports streaming transcriptions(and translations). This is useful for when you want to process large audio files and would rather receive the transcription in chunks as they are processed rather than waiting for the whole file to be transcribed. It works similarly to chat messages when chatting with LLMs.
 - Audio file translation via `POST /v1/audio/translations` endpoint.
 -  Live audio transcription via `WS /v1/audio/transcriptions` endpoint.
     - LocalAgreement2 ([paper](https://aclanthology.org/2023.ijcnlp-demo.3.pdf) | [original implementation](https://github.com/ufal/whisper_streaming)) algorithm is used for live transcription.
@@ -23,20 +23,20 @@ See [OpenAI API reference](https://platform.openai.com/docs/api-reference/audio)
 ## Quick Start
 [Hugging Face Space](https://huggingface.co/spaces/Iatalking/fast-whisper-server)
 
-![image](https://github.com/fedirz/faster-whisper-server/assets/76551385/6d215c52-ded5-41d2-89a5-03a6fd113aa0)
+![image](https://github.com/fedirz/asr-server/assets/76551385/6d215c52-ded5-41d2-89a5-03a6fd113aa0)
 
 Using Docker
 ```bash
-docker run --gpus=all --publish 8000:8000 --volume ~/.cache/huggingface:/root/.cache/huggingface fedirz/faster-whisper-server:latest-cuda
+docker run --gpus=all --publish 8000:8000 --volume ~/.cache/huggingface:/root/.cache/huggingface fedirz/asr-server:latest-cuda
 # or
-docker run --publish 8000:8000 --volume ~/.cache/huggingface:/root/.cache/huggingface fedirz/faster-whisper-server:latest-cpu
+docker run --publish 8000:8000 --volume ~/.cache/huggingface:/root/.cache/huggingface fedirz/asr-server:latest-cpu
 ```
 Using Docker Compose
 ```bash
-curl -sO https://raw.githubusercontent.com/fedirz/faster-whisper-server/master/compose.yaml
-docker compose up --detach faster-whisper-server-cuda
+curl -sO https://raw.githubusercontent.com/fedirz/asr-server/master/compose.yaml
+docker compose up --detach asr-server-cuda
 # or
-docker compose up --detach faster-whisper-server-cpu
+docker compose up --detach asr-server-cpu
 ```
 
 Using Kubernetes: [tutorial](https://substratus.ai/blog/deploying-faster-whisper-on-k8s)
@@ -83,7 +83,7 @@ curl http://localhost:8000/v1/audio/translations -F "file=@audio.wav"
 ### Live Transcription (using Web Socket)
 From [live-audio](./examples/live-audio) example
 
-https://github.com/fedirz/faster-whisper-server/assets/76551385/e334c124-af61-41d4-839c-874be150598f
+https://github.com/fedirz/asr-server/assets/76551385/e334c124-af61-41d4-839c-874be150598f
 
 [websocat](https://github.com/vi/websocat?tab=readme-ov-file#installation) installation is required.
 Live transcribing audio data from a microphone.

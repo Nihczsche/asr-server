@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING, Annotated
 from fastapi import APIRouter, HTTPException, Path, Security
 import huggingface_hub
 
-from faster_whisper_server.api_models import (
+from asr_server.api_models import (
     ListModelsResponse,
     Model,
 )
-from faster_whisper_server.security import check_api_key
+from asr_server.security import check_api_key
 
 if TYPE_CHECKING:
     from huggingface_hub.hf_api import ModelInfo

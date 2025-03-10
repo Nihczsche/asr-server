@@ -4,9 +4,9 @@ from fastapi import APIRouter, Response, Security
 import huggingface_hub
 from huggingface_hub.hf_api import RepositoryNotFoundError
 
-from faster_whisper_server import hf_utils
-from faster_whisper_server.dependencies import ModelManagerDependency  # noqa: TCH001
-from faster_whisper_server.security import check_api_key
+from asr_server import hf_utils
+from asr_server.dependencies import TritonManagerDependency  # noqa: TCH001
+from asr_server.security import check_api_key
 
 router = APIRouter()
 
@@ -28,15 +28,15 @@ def pull_model(model_name: str, _: str = Security(check_api_key)) -> Response:
 
 
 @router.get("/api/ps", tags=["experimental"], summary="Get a list of loaded models.")
-def get_running_models(model_manager: ModelManagerDependency, _: str = Security(check_api_key)) -> dict[str, list[str]]:
-    return {"models": list(model_manager.loaded_models.keys())}
+def get_running_models(model_manager: TritonManagerDependency, _: str = Security(check_api_key)) -> dict[str, list[str]]:
+    return {"models": list(model_manager.loaded_infer_fns.keys())}
 
 
 @router.post("/api/ps/{model_name:path}", tags=["experimental"], summary="Load a model into memory.")
 def load_model_route(
-    model_manager: ModelManagerDependency, model_name: str, _: str = Security(check_api_key)
+    model_manager: TritonManagerDependency, model_name: str, _: str = Security(check_api_key)
 ) -> Response:
-    if model_name in model_manager.loaded_models:
+    if model_name in model_manager.loaded_infer_fns:
         return Response(status_code=409, content="Model already loaded")
     with model_manager.load_model(model_name):
         pass
@@ -45,7 +45,7 @@ def load_model_route(
 
 @router.delete("/api/ps/{model_name:path}", tags=["experimental"], summary="Unload a model from memory.")
 def stop_running_model(
-    model_manager: ModelManagerDependency, model_name: str, _: str = Security(check_api_key)
+    model_manager: TritonManagerDependency, model_name: str, _: str = Security(check_api_key)
 ) -> Response:
     try:
         model_manager.unload_model(model_name)

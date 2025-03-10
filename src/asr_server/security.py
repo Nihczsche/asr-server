@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from faster_whisper_server.dependencies import get_config
+from asr_server.dependencies import get_config
 
 auth_scheme = HTTPBearer(scheme_name="API key")
 api_key = get_config().api_key  # HACK

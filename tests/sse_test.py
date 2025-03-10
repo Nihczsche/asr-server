@@ -9,7 +9,7 @@ import srt
 import webvtt
 import webvtt.vtt
 
-from faster_whisper_server.api_models import (
+from asr_server.api_models import (
     CreateTranscriptionResponseJson,
     CreateTranscriptionResponseVerboseJson,
 )

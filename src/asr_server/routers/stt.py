@@ -21,7 +21,7 @@ from fastapi.websockets import WebSocketState
 from faster_whisper.vad import VadOptions, get_speech_timestamps
 from pydantic import AfterValidator, Field
 
-from faster_whisper_server.api_models import (
+from asr_server.api_models import (
     DEFAULT_TIMESTAMP_GRANULARITIES,
     TIMESTAMP_GRANULARITIES_COMBINATIONS,
     CreateTranscriptionResponseJson,
@@ -29,18 +29,18 @@ from faster_whisper_server.api_models import (
     TimestampGranularities,
     TranscriptionSegment,
 )
-from faster_whisper_server.asr import FasterWhisperASR
-from faster_whisper_server.audio import AudioStream, audio_samples_from_file
-from faster_whisper_server.config import (
+from asr_server.asr import FasterWhisperASR
+from asr_server.audio import AudioStream, audio_samples_from_file
+from asr_server.config import (
     SAMPLES_PER_SECOND,
     Language,
     ResponseFormat,
     Task,
 )
-from faster_whisper_server.dependencies import ConfigDependency, ModelManagerDependency, get_config
-from faster_whisper_server.security import check_api_key
-from faster_whisper_server.text_utils import segments_to_srt, segments_to_text, segments_to_vtt
-from faster_whisper_server.transcriber import audio_transcriber
+from asr_server.dependencies import ConfigDependency, TritonManagerDependency, get_config
+from asr_server.security import check_api_key
+from asr_server.text_utils import segments_to_srt, segments_to_text, segments_to_vtt
+from asr_server.transcriber import audio_transcriber
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
@@ -141,7 +141,7 @@ ModelName = Annotated[
 )
 def translate_file(
     config: ConfigDependency,
-    model_manager: ModelManagerDependency,
+    model_manager: TritonManagerDependency,
     file: Annotated[UploadFile, Form()],
     model: Annotated[ModelName | None, Form()] = None,
     prompt: Annotated[str | None, Form()] = None,
@@ -191,7 +191,7 @@ async def get_timestamp_granularities(request: Request) -> TimestampGranularitie
 )
 def transcribe_file(
     config: ConfigDependency,
-    model_manager: ModelManagerDependency,
+    model_manager: TritonManagerDependency,
     request: Request,
     file: Annotated[UploadFile, Form()],
     model: Annotated[ModelName | None, Form()] = None,
@@ -273,7 +273,7 @@ async def audio_receiver(ws: WebSocket, audio_stream: AudioStream) -> None:
 @router.websocket("/v1/audio/transcriptions")
 async def transcribe_stream(
     config: ConfigDependency,
-    model_manager: ModelManagerDependency,
+    model_manager: TritonManagerDependency,
     ws: WebSocket,
     model: Annotated[ModelName | None, Query()] = None,
     language: Annotated[Language | None, Query()] = None,

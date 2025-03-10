@@ -1,6 +1,6 @@
 import logging
 
-from faster_whisper_server.dependencies import get_config
+from asr_server.dependencies import get_config
 
 
 def setup_logger() -> None:

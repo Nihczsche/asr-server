@@ -9,15 +9,15 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 
-from faster_whisper_server.dependencies import get_config, get_model_manager
-from faster_whisper_server.logger import setup_logger
-from faster_whisper_server.routers.list_models import (
+from asr_server.dependencies import get_config, get_triton_manager
+from asr_server.logger import setup_logger
+from asr_server.routers.list_models import (
     router as list_models_router,
 )
-from faster_whisper_server.routers.misc import (
+from asr_server.routers.misc import (
     router as misc_router,
 )
-from faster_whisper_server.routers.stt import (
+from asr_server.routers.stt import (
     router as stt_router,
 )
 
@@ -33,7 +33,7 @@ def create_app() -> FastAPI:
     config = get_config()  # HACK
     logger.debug(f"Config: {config}")
 
-    model_manager = get_model_manager()  # HACK
+    model_manager = get_triton_manager()  # HACK
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
@@ -59,7 +59,7 @@ def create_app() -> FastAPI:
     if config.enable_ui:
         import gradio as gr
 
-        from faster_whisper_server.gradio_app import create_gradio_demo
+        from asr_server.gradio_app import create_gradio_demo
 
         app = gr.mount_gradio_app(app, create_gradio_demo(config), path="/")
 

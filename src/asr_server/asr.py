@@ -5,13 +5,13 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
-from faster_whisper_server.api_models import TranscriptionSegment, TranscriptionWord
-from faster_whisper_server.text_utils import Transcription
+from asr_server.api_models import TranscriptionSegment, TranscriptionWord
+from asr_server.text_utils import Transcription
 
 if TYPE_CHECKING:
     from faster_whisper import transcribe
 
-    from faster_whisper_server.audio import Audio
+    from asr_server.audio import Audio
 
 logger = logging.getLogger(__name__)
 

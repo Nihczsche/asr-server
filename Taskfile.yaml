@@ -1,6 +1,6 @@
 version: "3"
 tasks:
-  server: uvicorn --factory --host 0.0.0.0 faster_whisper_server.main:create_app {{.CLI_ARGS}}
+  server: uvicorn --factory --host 0.0.0.0 asr_server.main:create_app {{.CLI_ARGS}}
   test:
     cmds:
       - pytest -o log_cli=true -o log_cli_level=DEBUG {{.CLI_ARGS}}
@@ -11,14 +11,14 @@ tasks:
       - docker compose build
     sources:
       - Dockerfile.*
-      - faster_whisper_server/*.py
+      - asr_server/*.py
   create-multi-arch-builder: docker buildx create --name main --driver=docker-container
   docker-build:
     cmds:
       - docker compose build --builder main {{.CLI_ARGS}}
     sources:
       - Dockerfile.*
-      - faster_whisper_server/*.py
+      - asr_server/*.py
   cii:
     cmds:
       - act --rm --action-offline-mode --secret-file .secrets {{.CLI_ARGS}}

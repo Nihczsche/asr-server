@@ -6,7 +6,7 @@ import httpx
 from httpx_sse import connect_sse
 from openai import OpenAI
 
-from faster_whisper_server.config import Config, Task
+from asr_server.config import Config, Task
 
 TRANSCRIPTION_ENDPOINT = "/v1/audio/transcriptions"
 TRANSLATION_ENDPOINT = "/v1/audio/translations"
@@ -93,7 +93,7 @@ def create_gradio_demo(config: Config) -> gr.Blocks:
     stream_checkbox = gr.Checkbox(label="Stream", value=True)
     with gr.Interface(
         title="Whisper Playground",
-        description="""Consider supporting the project by starring the <a href="https://github.com/fedirz/faster-whisper-server">repository on GitHub</a>.""",  # noqa: E501
+        description="""Consider supporting the project by starring the <a href="https://github.com/fedirz/asr-server">repository on GitHub</a>.""",  # noqa: E501
         inputs=[
             gr.Audio(type="filepath"),
             model_dropdown,

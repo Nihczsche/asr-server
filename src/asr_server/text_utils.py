@@ -3,12 +3,12 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from faster_whisper_server.dependencies import get_config
+from asr_server.dependencies import get_config
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from faster_whisper_server.api_models import TranscriptionSegment, TranscriptionWord
+    from asr_server.api_models import TranscriptionSegment, TranscriptionWord
 
 
 class Transcription:

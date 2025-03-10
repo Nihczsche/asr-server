@@ -1,7 +1,7 @@
 # TODO: https://docs.astral.sh/uv/guides/integration/docker/#configuring-watch-with-docker-compose
 services:
-  faster-whisper-server-cuda:
-    image: fedirz/faster-whisper-server:latest-cuda
+  asr-server-cuda:
+    image: nihczsche/asr-server:latest-cuda
     build:
       dockerfile: Dockerfile.cuda
       context: .
@@ -15,7 +15,7 @@ services:
       - hugging_face_cache:/root/.cache/huggingface
     develop:
       watch:
-        - path: faster_whisper_server
+        - path: asr_server
           action: rebuild
     deploy:
       resources:
@@ -28,8 +28,8 @@ services:
               # - driver: cdi
               #   device_ids:
               #   - nvidia.com/gpu=all
-  faster-whisper-server-cpu:
-    image: fedirz/faster-whisper-server:latest-cpu
+  asr-server-cpu:
+    image: nihczsche/asr-server:latest-cpu
     build:
       dockerfile: Dockerfile.cpu
       context: .
@@ -43,7 +43,7 @@ services:
       - hugging_face_cache:/root/.cache/huggingface
     develop:
       watch:
-        - path: faster_whisper_server
+        - path: asr_server
           action: rebuild
 volumes:
   hugging_face_cache:

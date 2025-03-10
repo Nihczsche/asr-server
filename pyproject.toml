@@ -1,5 +1,5 @@
 [project]
-name = "faster-whisper-server"
+name = "asr-server"
 version = "0.1.0"
 requires-python = ">=3.12,<3.13"
 # https://packaging.python.org/en/latest/specifications/version-specifiers/#id5
@@ -7,12 +7,13 @@ dependencies = [
     "fastapi>=0.115.0",
     "faster-whisper>=1.0.3",
     "huggingface-hub>=0.25.1",
-    "numpy>=2.1.1",
+    "numpy==1.26.4",
     "pydantic-settings>=2.5.2",
     "pydantic>=2.9.0",
     "python-multipart>=0.0.10",
     "soundfile>=0.12.1",
     "uvicorn>=0.30.6",
+    "nvidia-pytriton==0.5.14",
 ]
 
 [project.optional-dependencies]

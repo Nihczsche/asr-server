@@ -8,7 +8,7 @@ from openai import AsyncOpenAI
 import pytest
 import pytest_asyncio
 
-from faster_whisper_server.main import create_app
+from asr_server.main import create_app
 
 disable_loggers = ["multipart.multipart", "faster_whisper"]
 

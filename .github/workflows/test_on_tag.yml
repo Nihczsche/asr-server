@@ -19,5 +19,5 @@ jobs:
           enable-cache: true
       - run: uv python install 3.12
       - run: uv sync --all-extras
-      # TODO: figure out why `pytest` doesn't discover tests in `faster_whisper_server` directory by itself
-      - run: uv run pytest -m "not requires_openai" src/faster_whisper_server/* tests
+      # TODO: figure out why `pytest` doesn't discover tests in `asr_server` directory by itself
+      - run: uv run pytest -m "not requires_openai" src/asr_server/* tests
