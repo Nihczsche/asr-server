@@ -11,7 +11,7 @@ from asr_server.main import create_app
 @pytest.mark.asyncio
 async def test_model_unloaded_after_ttl() -> None:
     ttl = 5
-    model = "Systran/faster-whisper-tiny.en"
+    model = "nvidia/stt_en_conformer_ctc_small"
     os.environ["WHISPER__TTL"] = str(ttl)
     os.environ["ENABLE_UI"] = "false"
     async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://test") as aclient:
@@ -28,7 +28,7 @@ async def test_model_unloaded_after_ttl() -> None:
 @pytest.mark.asyncio
 async def test_ttl_resets_after_usage() -> None:
     ttl = 5
-    model = "Systran/faster-whisper-tiny.en"
+    model = "nvidia/stt_en_conformer_ctc_small"
     os.environ["WHISPER__TTL"] = str(ttl)
     os.environ["ENABLE_UI"] = "false"
     async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://test") as aclient:
@@ -68,7 +68,7 @@ async def test_ttl_resets_after_usage() -> None:
 @pytest.mark.asyncio
 async def test_model_cant_be_unloaded_when_used() -> None:
     ttl = 0
-    model = "Systran/faster-whisper-tiny.en"
+    model = "nvidia/stt_en_conformer_ctc_small"
     os.environ["WHISPER__TTL"] = str(ttl)
     os.environ["ENABLE_UI"] = "false"
     async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://test") as aclient:
@@ -92,7 +92,7 @@ async def test_model_cant_be_unloaded_when_used() -> None:
 @pytest.mark.asyncio
 async def test_model_cant_be_loaded_twice() -> None:
     ttl = -1
-    model = "Systran/faster-whisper-tiny.en"
+    model = "nvidia/stt_en_conformer_ctc_small"
     os.environ["ENABLE_UI"] = "false"
     os.environ["WHISPER__TTL"] = str(ttl)
     async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://test") as aclient:
@@ -107,7 +107,7 @@ async def test_model_cant_be_loaded_twice() -> None:
 @pytest.mark.asyncio
 async def test_model_is_unloaded_after_request_when_ttl_is_zero() -> None:
     ttl = 0
-    os.environ["WHISPER__MODEL"] = "Systran/faster-whisper-tiny.en"
+    os.environ["NEMO__MODEL"] = "nvidia/stt_en_conformer_ctc_small"
     os.environ["WHISPER__TTL"] = str(ttl)
     os.environ["ENABLE_UI"] = "false"
     async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://test") as aclient:
@@ -116,7 +116,7 @@ async def test_model_is_unloaded_after_request_when_ttl_is_zero() -> None:
         res = await aclient.post(
             "/v1/audio/transcriptions",
             files={"file": ("audio.wav", data, "audio/wav")},
-            data={"model": "Systran/faster-whisper-tiny.en"},
+            data={"model": "nvidia/stt_en_conformer_ctc_small"},
         )
         res = (await aclient.get("/api/ps")).json()
         assert len(res["models"]) == 0

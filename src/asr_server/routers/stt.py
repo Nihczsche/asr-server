@@ -29,7 +29,7 @@ from asr_server.api_models import (
     TimestampGranularities,
     TranscriptionSegment,
 )
-from asr_server.asr import FasterWhisperASR
+from asr_server.asr import NeMoASR
 from asr_server.audio import AudioStream, audio_samples_from_file
 from asr_server.config import (
     SAMPLES_PER_SECOND,
@@ -117,8 +117,8 @@ def handle_default_openai_model(model_name: str) -> str:
     """
     config = get_config()  # HACK
     if model_name == "whisper-1":
-        logger.info(f"{model_name} is not a valid model name. Using {config.whisper.model} instead.")
-        return config.whisper.model
+        logger.info(f"{model_name} is not a valid model name. Using {config.nemo.model} instead.")
+        return config.nemo.model
     return model_name
 
 
@@ -128,8 +128,8 @@ ModelName = Annotated[
     Field(
         description="The ID of the model. You can get a list of available models by calling `/v1/models`.",
         examples=[
-            "Systran/faster-distil-whisper-large-v3",
-            "bofenghuang/whisper-large-v2-cv11-french-ct2",
+            "nvidia/parakeet-rnnt-1.1b",
+            "nvidia/parakeet-tdt-1.1b",
         ],
     ),
 ]
@@ -152,11 +152,11 @@ def translate_file(
     _: str = Security(check_api_key),
 ) -> Response | StreamingResponse:
     if model is None:
-        model = config.whisper.model
+        model = config.nemo.model
     if response_format is None:
         response_format = config.default_response_format
-    with model_manager.load_model(model) as whisper:
-        segments, transcription_info = whisper.transcribe(
+    with model_manager.load_model(model) as nemo:
+        segments, transcription_info = nemo.transcribe(
             file.file,
             task=Task.TRANSLATE,
             initial_prompt=prompt,
@@ -210,7 +210,7 @@ def transcribe_file(
     _: str = Security(check_api_key),
 ) -> Response | StreamingResponse:
     if model is None:
-        model = config.whisper.model
+        model = config.nemo.model
     if language is None:
         language = config.default_language
     if response_format is None:
@@ -220,8 +220,8 @@ def transcribe_file(
         logger.warning(
             "It only makes sense to provide `timestamp_granularities[]` when `response_format` is set to `verbose_json`. See https://platform.openai.com/docs/api-reference/audio/createTranscription#audio-createtranscription-timestamp_granularities."  # noqa: E501
         )
-    with model_manager.load_model(model) as whisper:
-        segments, transcription_info = whisper.transcribe(
+    with model_manager.load_model(model) as nemo:
+        segments, transcription_info = nemo.transcribe(
             file.file,
             task=Task.TRANSCRIBE,
             language=language,
@@ -283,7 +283,7 @@ async def transcribe_stream(
     _: str = Security(check_api_key),
 ) -> None:
     if model is None:
-        model = config.whisper.model
+        model = config.nemo.model
     if language is None:
         language = config.default_language
     if response_format is None:
@@ -295,8 +295,8 @@ async def transcribe_stream(
         "vad_filter": vad_filter,
         "condition_on_previous_text": False,
     }
-    with model_manager.load_model(model) as whisper:
-        asr = FasterWhisperASR(whisper, **transcribe_opts)
+    with model_manager.load_model(model) as nemo:
+        asr = NeMoASR(nemo, **transcribe_opts)
         audio_stream = AudioStream()
         async with asyncio.TaskGroup() as tg:
             tg.create_task(audio_receiver(ws, audio_stream))

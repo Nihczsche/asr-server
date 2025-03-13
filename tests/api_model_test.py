@@ -2,7 +2,7 @@ import openai
 from openai import AsyncOpenAI
 import pytest
 
-MODEL_THAT_EXISTS = "Systran/faster-whisper-tiny.en"
+MODEL_THAT_EXISTS = "nvidia/stt_en_conformer_ctc_small"
 MODEL_THAT_DOES_NOT_EXIST = "i-do-not-exist"
 MIN_EXPECTED_NUMBER_OF_MODELS = 70  # At the time of the test creation there are 89 models
 

@@ -134,7 +134,7 @@ async function convertToPcm(filePath) {
 }
 
 async function main() {
-    const model = 'Systran/faster-whisper-large-v3';
+    const model = 'nvidia/parakeet-rnnt-1.1b';
     const language = 'en';
     const responseFormat = 'json';
     const temperature = '0';

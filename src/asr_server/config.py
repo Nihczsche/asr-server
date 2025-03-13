@@ -146,10 +146,10 @@ class Task(enum.StrEnum):
     TRANSLATE = "translate"
 
 
-class WhisperConfig(BaseModel):
+class NeMoConfig(BaseModel):
     """See https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/transcribe.py#L599."""
 
-    model: str = Field(default="Systran/faster-whisper-small")
+    model: str = Field(default="nvidia/stt_en_conformer_ctc_small")
     """
     Default Huggingface model to use for transcription. Note, the model must support being ran using CTranslate2.
     This model will be used if no model is specified in the request.
@@ -157,11 +157,11 @@ class WhisperConfig(BaseModel):
     Models created by authors of `faster-whisper` can be found at https://huggingface.co/Systran
     You can find other supported models at https://huggingface.co/models?p=2&sort=trending&search=ctranslate2 and https://huggingface.co/models?sort=trending&search=ct2
     """
-    inference_device: Device = Field(default=Device.AUTO)
-    device_index: int | list[int] = 0
-    compute_type: Quantization = Field(default=Quantization.DEFAULT)
-    cpu_threads: int = 0
-    num_workers: int = 1
+    # inference_device: Device = Field(default=Device.AUTO)
+    # device_index: int | list[int] = 0
+    # compute_type: Quantization = Field(default=Quantization.DEFAULT)
+    # cpu_threads: int = 0
+    # num_workers: int = 1
     ttl: int = Field(default=300, ge=-1)
     """
     Time in seconds until the model is unloaded if it is not being used.
@@ -175,7 +175,7 @@ class Config(BaseSettings):
 
     Pydantic will automatically handle mapping uppercased environment variables to the corresponding fields.
     To populate nested, the environment should be prefixed with the nested field name and an underscore. For example,
-    the environment variable `LOG_LEVEL` will be mapped to `log_level`, `WHISPER__MODEL`(note the double underscore) to `whisper.model`, to set quantization to int8, use `WHISPER__COMPUTE_TYPE=int8`, etc.
+    the environment variable `LOG_LEVEL` will be mapped to `log_level`, `NEMO__MODEL`(note the double underscore) to `whisper.model`, to set quantization to int8, use `WHISPER__COMPUTE_TYPE=int8`, etc.
     """  # noqa: E501
 
     model_config = SettingsConfigDict(env_nested_delimiter="__")
@@ -203,12 +203,12 @@ class Config(BaseSettings):
     It is recommended to set this as it will improve the performance.
     """
     default_response_format: ResponseFormat = ResponseFormat.JSON
-    whisper: WhisperConfig = WhisperConfig()
+    nemo: NeMoConfig = NeMoConfig()
     preload_models: list[str] = Field(
         default_factory=list,
         examples=[
-            ["Systran/faster-whisper-small"],
-            ["Systran/faster-whisper-medium.en", "Systran/faster-whisper-small.en"],
+            ["nvidia/stt_en_conformer_ctc_small"],
+            ["nvidia/parakeet-tdt_ctc-110m", "nvidia/parakeet-rnnt-1.1b"],
         ],
     )
     """

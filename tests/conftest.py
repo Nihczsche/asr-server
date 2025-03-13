@@ -22,14 +22,14 @@ def pytest_configure() -> None:
 # NOTE: not being used. Keeping just in case
 @pytest.fixture
 def client() -> Generator[TestClient, None, None]:
-    os.environ["WHISPER__MODEL"] = "Systran/faster-whisper-tiny.en"
+    os.environ["NEMO__MODEL"] = "nvidia/stt_en_conformer_ctc_small"
     with TestClient(create_app()) as client:
         yield client
 
 
 @pytest_asyncio.fixture()
 async def aclient() -> AsyncGenerator[AsyncClient, None]:
-    os.environ["WHISPER__MODEL"] = "Systran/faster-whisper-tiny.en"
+    os.environ["NEMO__MODEL"] = "nvidia/stt_en_conformer_ctc_small"
     async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://test") as aclient:
         yield aclient
 

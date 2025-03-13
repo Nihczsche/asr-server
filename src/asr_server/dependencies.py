@@ -7,7 +7,7 @@ from asr_server.config import Config
 from asr_server.triton_manager import TritonManager
 
 config = Config()
-triton_manager = TritonManager(config.whisper)
+triton_manager = TritonManager(config.nemo)
 
 @lru_cache
 def get_config() -> Config:

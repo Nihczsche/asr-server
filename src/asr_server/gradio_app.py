@@ -68,21 +68,21 @@ def create_gradio_demo(config: Config) -> gr.Blocks:
     def update_model_dropdown() -> gr.Dropdown:
         models = openai_client.models.list().data
         model_names: list[str] = [model.id for model in models]
-        assert config.whisper.model in model_names
-        recommended_models = {model for model in model_names if model.startswith("Systran")}
+        assert config.nemo.model in model_names
+        recommended_models = {model for model in model_names if model.startswith("nvidia")}
         other_models = [model for model in model_names if model not in recommended_models]
         model_names = list(recommended_models) + other_models
         return gr.Dropdown(
             # no idea why it's complaining
             choices=model_names,  # pyright: ignore[reportArgumentType]
             label="Model",
-            value=config.whisper.model,
+            value=config.nemo.model,
         )
 
     model_dropdown = gr.Dropdown(
-        choices=[config.whisper.model],
+        choices=[config.nemo.model],
         label="Model",
-        value=config.whisper.model,
+        value=config.nemo.model,
     )
     task_dropdown = gr.Dropdown(
         choices=[task.value for task in Task],
@@ -92,7 +92,7 @@ def create_gradio_demo(config: Config) -> gr.Blocks:
     temperature_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.1, label="Temperature", value=0.0)
     stream_checkbox = gr.Checkbox(label="Stream", value=True)
     with gr.Interface(
-        title="Whisper Playground",
+        title="NeMo Playground",
         description="""Consider supporting the project by starring the <a href="https://github.com/fedirz/asr-server">repository on GitHub</a>.""",  # noqa: E501
         inputs=[
             gr.Audio(type="filepath"),

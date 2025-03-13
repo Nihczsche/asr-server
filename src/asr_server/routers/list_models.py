@@ -19,7 +19,7 @@ router = APIRouter()
 
 @router.get("/v1/models")
 def get_models(_: str = Security(check_api_key)) -> ListModelsResponse:
-    models = huggingface_hub.list_models(library="ctranslate2", tags="automatic-speech-recognition", cardData=True)
+    models = huggingface_hub.list_models(library="NeMo", tags="automatic-speech-recognition", cardData=True)
     models = list(models)
     models.sort(key=lambda model: model.downloads or -1, reverse=True)
     transformed_models: list[Model] = []
@@ -47,7 +47,7 @@ def get_models(_: str = Security(check_api_key)) -> ListModelsResponse:
 @router.get("/v1/models/{model_name:path}")
 # NOTE: `examples` doesn't work https://github.com/tiangolo/fastapi/discussions/10537
 def get_model(
-    model_name: Annotated[str, Path(example="Systran/faster-distil-whisper-large-v3")], _: str = Security(check_api_key)
+    model_name: Annotated[str, Path(example="nvidia/parakeet-rnnt-1.1b")], _: str = Security(check_api_key)
 ) -> Model:
     models = huggingface_hub.list_models(
         model_name=model_name, library="ctranslate2", tags="automatic-speech-recognition", cardData=True

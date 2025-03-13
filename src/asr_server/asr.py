@@ -12,17 +12,18 @@ if TYPE_CHECKING:
     from faster_whisper import transcribe
 
     from asr_server.audio import Audio
+    from asr_server.triton_manager import NeMoClient
 
 logger = logging.getLogger(__name__)
 
 
-class FasterWhisperASR:
+class NeMoASR:
     def __init__(
         self,
-        whisper: transcribe.WhisperModel,
+        nemo: NeMoClient,
         **kwargs,
     ) -> None:
-        self.whisper = whisper
+        self.nemo = nemo
         self.transcribe_opts = kwargs
 
     def _transcribe(
@@ -31,7 +32,7 @@ class FasterWhisperASR:
         prompt: str | None = None,
     ) -> tuple[Transcription, transcribe.TranscriptionInfo]:
         start = time.perf_counter()
-        segments, transcription_info = self.whisper.transcribe(
+        segments, transcription_info = self.nemo.transcribe(
             audio.data,
             initial_prompt=prompt,
             word_timestamps=True,

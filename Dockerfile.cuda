@@ -28,8 +28,8 @@ RUN --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     export LD_LIBRARY_PATH=$(pyenv virtualenv-prefix)/lib:$LD_LIBRARY_PATH; \
     pip install .[ui]
 
-ENV WHISPER__MODEL=Systran/faster-whisper-large-v3
-ENV WHISPER__INFERENCE_DEVICE=auto
+ENV NEMO__MODEL=nvidia/parakeet-rnnt-1.1b
+ENV NEMO__INFERENCE_DEVICE=auto
 ENV UVICORN_HOST=0.0.0.0
 ENV UVICORN_PORT=8000
 

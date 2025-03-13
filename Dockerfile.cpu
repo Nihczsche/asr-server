@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:jammy
 
 RUN --mount=type=cache,target=/var/cache/apt \ 
     --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
@@ -7,7 +7,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     python3-distutils python-is-python3 git \
     build-essential libssl-dev zlib1g-dev \
     libbz2-dev libreadline-dev libsqlite3-dev curl \
-    libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+    libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev ca-certificates
 
 # Install pyenv
 RUN curl https://pyenv.run | bash
@@ -28,8 +28,8 @@ RUN --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     export LD_LIBRARY_PATH=$(pyenv virtualenv-prefix)/lib:$LD_LIBRARY_PATH; \
     pip install .[ui]
 
-ENV WHISPER__MODEL=Systran/faster-whisper-small
-ENV WHISPER__INFERENCE_DEVICE=cpu
+ENV NEMO__MODEL=nvidia/stt_en_conformer_ctc_small
+ENV NEMO__INFERENCE_DEVICE=cpu
 ENV UVICORN_HOST=0.0.0.0
 ENV UVICORN_PORT=8000
 

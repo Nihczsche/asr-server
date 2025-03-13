@@ -172,22 +172,25 @@ class Model(BaseModel):
         json_schema_extra={
             "examples": [
                 {
-                    "id": "Systran/faster-whisper-large-v3",
-                    "created": 1700732060,
+                    "id": "nvidia/parakeet-rnnt-0.6b",
+                    "created": 1703777795,
                     "object": "model",
-                    "owned_by": "Systran",
+                    "owned_by": "nvidia",
+                    "language": ["en"],
                 },
                 {
-                    "id": "Systran/faster-distil-whisper-large-v3",
-                    "created": 1711378296,
+                    "id": "nvidia/parakeet-tdt-1.1b",
+                    "created": 1706148306,
                     "object": "model",
-                    "owned_by": "Systran",
+                    "owned_by": "nvidia",
+                    "language": ["en"],
                 },
                 {
-                    "id": "bofenghuang/whisper-large-v2-cv11-french-ct2",
-                    "created": 1687968011,
+                    "id": "nvidia/parakeet-rnnt-1.1b",
+                    "created": 1703720413,
                     "object": "model",
-                    "owned_by": "bofenghuang",
+                    "owned_by": "nvidia",
+                    "language": ["en"],
                 },
             ]
         },

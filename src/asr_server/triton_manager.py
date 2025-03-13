@@ -11,9 +11,10 @@ import threading
 import time
 from typing import TYPE_CHECKING, BinaryIO
 
+import nemo.collections.asr as nemo_asr
 from faster_whisper import WhisperModel
 from faster_whisper.audio import decode_audio
-from faster_whisper.transcribe import Segment, TranscriptionInfo
+from faster_whisper.transcribe import Segment, TranscriptionInfo, TranscriptionOptions, VadOptions
 import numpy as np
 from pytriton.client import ModelClient
 
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
     from pytriton.proxy.types import Request
 
     from asr_server.config import (
-        WhisperConfig,
+        NeMoConfig,
     )
 
 logger = logging.getLogger(__name__)
@@ -38,15 +39,15 @@ logger = logging.getLogger(__name__)
 # TODO: enable concurrent model downloads
 
 
-class WhisperClient:
+class NeMoClient:
     def __init__(
         self,
         model_id: str,
-        whisper: WhisperModel,
+        whisper: nemo_asr.models.ASRModel,
         triton: Triton,
     ) -> None:
         self.model_id = model_id
-        self.sampling_rate = whisper.feature_extractor.sampling_rate
+        self.sampling_rate = 16000
         self.client = ModelClient(triton._url, self.model_id)  # noqa: SLF001
 
     def transcribe(
@@ -79,23 +80,23 @@ class WhisperClient:
         return segments, info
 
 
-class SelfDisposingWhisperInferFn:
+class SelfDisposingNeMoInferFn:
     def __init__(
         self,
         model_id: str,
-        whisper_config: WhisperConfig,
+        nemo_config: NeMoConfig,
         triton: Triton,
         *,
         on_unload: Callable[[str], None] | None = None,
     ) -> None:
         self.model_id = model_id
-        self.whisper_config = whisper_config
+        self.nemo_config = nemo_config
         self.on_unload = on_unload
 
         self.ref_count: int = 0
         self.rlock = threading.RLock()
         self.expire_timer: threading.Timer | None = None
-        self.whisper: WhisperModel | None = None
+        self.nemo: nemo_asr.models.ASRModel | None = None
 
         self.triton = triton
         self.triton_model_id = self.model_id.replace("/", ".")
@@ -104,7 +105,7 @@ class SelfDisposingWhisperInferFn:
 
     def unload(self) -> None:
         with self.rlock:
-            if self.whisper is None:
+            if self.nemo is None:
                 raise ValueError(f"Model {self.model_id} is not loaded. {self.ref_count=}")
             if self.ref_count > 0:
                 raise ValueError(f"Model {self.model_id} is still in use. {self.ref_count=}")
@@ -132,7 +133,7 @@ class SelfDisposingWhisperInferFn:
                     wait_for_server_ready(client, timeout_s=DEFAULT_TRITON_STARTUP_TIMEOUT_S)
 
             self.infer_fn = None
-            self.whisper = None
+            self.nemo = None
             # WARN: ~300 MB of memory will still be held by the model. See https://github.com/SYSTRAN/faster-whisper/issues/992
 
             gc.collect()
@@ -142,17 +143,22 @@ class SelfDisposingWhisperInferFn:
 
     def _load(self) -> None:
         with self.rlock:
-            assert self.whisper is None
+            assert self.nemo is None
             logger.debug(f"Loading model {self.model_id}")
             start = time.perf_counter()
-            self.whisper = WhisperModel(
+            # self.nemo = WhisperModel(
+            #     self.model_id,
+            #     device=self.whisper_config.inference_device,
+            #     device_index=self.whisper_config.device_index,
+            #     compute_type=self.whisper_config.compute_type,
+            #     cpu_threads=self.whisper_config.cpu_threads,
+            #     num_workers=self.whisper_config.num_workers,
+            # )
+            self.nemo = nemo_asr.models.ASRModel.from_pretrained(
                 self.model_id,
-                device=self.whisper_config.inference_device,
-                device_index=self.whisper_config.device_index,
-                compute_type=self.whisper_config.compute_type,
-                cpu_threads=self.whisper_config.cpu_threads,
-                num_workers=self.whisper_config.num_workers,
             )
+
+            print(f"Type: {type(self.nemo)}")
 
             def infer_fn(requests: list[Request]) -> list[dict]:
                 responses = []
@@ -161,19 +167,79 @@ class SelfDisposingWhisperInferFn:
                     in_1 = request["config"]
 
                     config_json = in_1[0]
-                    config: dict = json.loads(config_json)
+                    config: dict = json.loads(config_json)  # TODO
 
-                    segments, transcription_info = self.whisper.transcribe(in_0, **config)
+                    output = self.nemo.transcribe(in_0, timestamps=True)
+
+                    if isinstance(
+                        self.nemo, nemo_asr.models.EncDecHybridRNNTCTCBPEModel | nemo_asr.models.EncDecRNNTBPEModel
+                    ):
+                        hyp_list = output[0]
+                    else:
+                        hyp_list = output
 
                     seg_list = []
-                    for segment in segments:
+                    duration = 0
+                    for id_val, segment in enumerate(hyp_list[0].timestep["segment"]):
+                        duration += segment["end"] - segment["start"]
+                        seg = Segment(
+                            id=id_val,
+                            seek=0,
+                            start=segment["start"],
+                            end=segment["end"],
+                            text=segment["segment"],
+                            tokens=[],
+                            avg_logprob=0.0,
+                            compression_ratio=1.0,
+                            no_speech_prob=0.5,
+                            temperature=0.0,
+                            words=None,
+                        )
                         if hasattr(segment, "_asdict"):
-                            seg_list.append(segment._asdict())
+                            seg_list.append(seg._asdict())
                         else:
-                            seg_list.append(asdict(segment))
+                            seg_list.append(asdict(seg))
+
                     segments = {
                         "seg_list": seg_list,
                     }
+
+                    transcription_info = TranscriptionInfo(
+                        language="tbd",
+                        language_probability=0.99,
+                        duration=duration,
+                        duration_after_vad=duration,
+                        all_language_probs=None,
+                        transcription_options=TranscriptionOptions(
+                            beam_size=config.get("beam_size"),
+                            best_of=config.get("best_of", 5),
+                            patience=config.get("patience", 1),
+                            length_penalty=config.get("length_penalty", 1),
+                            repetition_penalty=config.get("repetition_penalty", 1),
+                            no_repeat_ngram_size=config.get("no_repeat_ngram_size", 0),
+                            log_prob_threshold=config.get("log_prob_threshold", -1.0),
+                            no_speech_threshold=config.get("no_speech_threshold", 0.6),
+                            compression_ratio_threshold=config.get("compression_ratio_threshold", 2.4),
+                            temperatures=0.0,
+                            initial_prompt="",
+                            prefix=None,
+                            suppress_blank=True,
+                            suppress_tokens=None,
+                            prepend_punctuations="",
+                            append_punctuations="",
+                            max_new_tokens=None,
+                            hotwords=None,
+                            word_timestamps=False,
+                            hallucination_silence_threshold=None,
+                            condition_on_previous_text=False,
+                            clip_timestamps=[],
+                            prompt_reset_on_temperature=0.5,
+                            multilingual=False,
+                            without_timestamps=True,
+                            max_initial_timestamp=0.0,
+                        ),
+                        vad_options=VadOptions(),
+                    )
 
                     if hasattr(transcription_info, "_asdict"):
                         ts_info = transcription_info._asdict()
@@ -228,30 +294,30 @@ class SelfDisposingWhisperInferFn:
             self.ref_count -= 1
             logger.debug(f"Decremented ref count for {self.model_id}, {self.ref_count=}")
             if self.ref_count <= 0:
-                if self.whisper_config.ttl > 0:
-                    logger.info(f"Model {self.model_id} is idle, scheduling offload in {self.whisper_config.ttl}s")
-                    self.expire_timer = threading.Timer(self.whisper_config.ttl, self.unload)
+                if self.nemo_config.ttl > 0:
+                    logger.info(f"Model {self.model_id} is idle, scheduling offload in {self.nemo_config.ttl}s")
+                    self.expire_timer = threading.Timer(self.nemo_config.ttl, self.unload)
                     self.expire_timer.start()
-                elif self.whisper_config.ttl == 0:
+                elif self.nemo_config.ttl == 0:
                     logger.info(f"Model {self.model_id} is idle, unloading immediately")
                     self.unload()
                 else:
                     logger.info(f"Model {self.model_id} is idle, not unloading")
 
-    def __enter__(self) -> WhisperClient:
+    def __enter__(self) -> NeMoClient:
         with self.rlock:
             if self.infer_fn is None:
                 self._load()
             self._increment_ref()
             assert self.infer_fn is not None
-            return WhisperClient(self.triton_model_id, self.whisper, self.triton)
+            return NeMoClient(self.triton_model_id, self.nemo, self.triton)
 
     def __exit__(self, *_args) -> None:  # noqa: ANN002
         self._decrement_ref()
 
 
 class TritonManager:
-    def __init__(self, whisper_config: WhisperConfig) -> None:
+    def __init__(self, nemo_config: NeMoConfig) -> None:
         self._triton = Triton(
             config=TritonConfig(
                 http_port=8001,
@@ -260,8 +326,8 @@ class TritonManager:
             )
         )
         self._triton.run()
-        self.whisper_config = whisper_config
-        self.loaded_infer_fns: OrderedDict[str, SelfDisposingWhisperInferFn] = OrderedDict()
+        self.nemo_config = nemo_config
+        self.loaded_infer_fns: OrderedDict[str, SelfDisposingNeMoInferFn] = OrderedDict()
         self._lock = threading.Lock()
 
     def _handle_model_unload(self, model_name: str) -> None:
@@ -275,14 +341,14 @@ class TritonManager:
                 raise KeyError(f"Model {model_name} not found")
             self.loaded_infer_fns[model_name].unload()
 
-    def load_model(self, model_name: str) -> SelfDisposingWhisperInferFn:
+    def load_model(self, model_name: str) -> SelfDisposingNeMoInferFn:
         with self._lock:
             if model_name in self.loaded_infer_fns:
                 logger.debug(f"{model_name} model already loaded")
                 return self.loaded_infer_fns[model_name]
-            self.loaded_infer_fns[model_name] = SelfDisposingWhisperInferFn(
+            self.loaded_infer_fns[model_name] = SelfDisposingNeMoInferFn(
                 model_name,
-                self.whisper_config,
+                self.nemo_config,
                 self._triton,
                 on_unload=self._handle_model_unload,
             )

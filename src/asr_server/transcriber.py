@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from asr_server.api_models import TranscriptionWord
-    from asr_server.asr import FasterWhisperASR
+    from asr_server.asr import NeMoASR
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def prompt(confirmed: Transcription) -> str | None:
 
 
 async def audio_transcriber(
-    asr: FasterWhisperASR,
+    asr: NeMoASR,
     audio_stream: AudioStream,
     min_duration: float,
 ) -> AsyncGenerator[Transcription, None]:
